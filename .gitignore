@@ -1,0 +1,46 @@
+# ===== C++ =====
+# Исполняемые файлы (Windows и Linux)
+*.exe
+*.out
+*.app
+
+# Объектные файлы и библиотеки
+*.o
+*.obj
+*.so
+*.dll
+*.lib
+*.a
+*.dylib
+
+# Отладочные символы
+*.pdb
+*.ilk
+*.idb
+
+# Сборочные папки
+build/
+out/
+bin/
+Debug/
+Release/
+
+# ===== Python =====
+# Кэш байт-кода
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Виртуальные окружения
+.venv/
+venv/
+env/
+ENV/
+
+# Кэш тестов и инструментов
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ===== VSCode =====
+.vscode/
