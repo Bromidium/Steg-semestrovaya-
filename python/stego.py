@@ -8,6 +8,7 @@ from pathlib import Path
 
 from cpp_bridge import encode_image, decode_image, cpp_capacity, load_image_pixels
 from metrics import print_quality_report, save_difference_image
+from metrics import print_quality_report, save_difference_image, lsb_histogram, odd_lsb_ratio, detect_hint
 
 
 def cmd_encode(args):
@@ -110,6 +111,63 @@ def cmd_capacity(args):
     print(f"Bits: {bits}")
     print(f"Максимальный объём payload: {cap} байт")
 
+def cmd_wm_encode(args):
+    """Команда: встраивание водяного знака"""
+    input_img = args.input_image
+    text = args.watermark_text
+    output_img = args.output_image
+    password = args.password or ""
+    
+    payload = text.encode('utf-8')
+    
+    print(f"Встраивание водяного знака: '{text}' ({len(payload)} байт)...")
+    
+    try:
+        info = encode_image(input_img, payload, output_img, bits=1, password=password, flags=1)
+        print(f"✓ Водяной знак встроен. Сохранено: {output_img}")
+    except Exception as e:
+        print(f"Ошибка: {e}", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_wm_decode(args):
+    """Команда: извлечение водяного знака"""
+    input_img = args.input_image
+    password = args.password or ""
+    
+    print(f"Поиск водяного знака в: {input_img}...")
+    
+    try:
+        payload = decode_image(input_img, password)
+        text = payload.decode('utf-8')
+        print(f"✓ Извлечен водяной знак: {text}")
+    except RuntimeError as e:
+        print(f"Ошибка: {e}", file=sys.stderr)
+        sys.exit(1)
+    except UnicodeDecodeError:
+        print("Ошибка: извлечённые данные не являются UTF-8 текстом", file=sys.stderr)
+        sys.exit(1)
+
+
+def cmd_detect(args):
+    """Команда: проверка на наличие стеганографии"""
+    from metrics import lsb_histogram, odd_lsb_ratio, detect_hint
+    
+    input_img = args.input_image
+    pixels, _, _ = load_image_pixels(input_img)
+    
+    even, odd = lsb_histogram(pixels)
+    ratio = odd_lsb_ratio(pixels)
+    hint = detect_hint(pixels)
+    
+    print(f"Анализ LSB для: {input_img}")
+    print("-" * 40)
+    print(f"Чётных LSB:   {even:,}")
+    print(f"Нечётных LSB: {odd:,}")
+    print(f"Доля нечётных: {ratio * 100:.2f}%")
+    print("-" * 40)
+    print(f"Вердикт: {hint}")
+
 def main():
     parser = argparse.ArgumentParser(
         description="LSB Стеганография (C++ core + Python wrapper)"
@@ -145,6 +203,19 @@ def main():
     cap_parser = subparsers.add_parser('capacity', help='Оценить максимальный объём')
     cap_parser.add_argument('input_image', help='Путь к изображению')
     cap_parser.add_argument('--bits', type=int, choices=[1, 2], default=1)
+
+    wm_enc = subparsers.add_parser('wm-encode', help='Встроить водяной знак')
+    wm_enc.add_argument('input_image')
+    wm_enc.add_argument('watermark_text', help='Текст водяного знака')
+    wm_enc.add_argument('output_image')
+    wm_enc.add_argument('-p', '--password', type=str, default='')
+
+    wm_dec = subparsers.add_parser('wm-decode', help='Извлечь водяной знак')
+    wm_dec.add_argument('input_image')
+    wm_dec.add_argument('-p', '--password', type=str, default='')
+
+    det_parser = subparsers.add_parser('detect', help='Проверить на стеганографию')
+    det_parser.add_argument('input_image')
     
     # --- Обработка команд ---
     args = parser.parse_args()
@@ -155,9 +226,16 @@ def main():
         cmd_decode(args)
     elif args.command == 'capacity':
         cmd_capacity(args)
+    elif args.command == 'wm-encode':
+        cmd_wm_encode(args)
+    elif args.command == 'wm-decode':
+        cmd_wm_decode(args)
+    elif args.command == 'detect':
+        cmd_detect(args)
     else:
         parser.print_help()
         sys.exit(1)
+    
 
 
 if __name__ == '__main__':

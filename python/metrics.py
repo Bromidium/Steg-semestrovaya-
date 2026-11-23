@@ -4,6 +4,7 @@
 
 import numpy as np
 from PIL import Image
+from typing import Tuple
 
 
 def calculate_mse(original: np.ndarray, encoded: np.ndarray) -> float:
@@ -107,3 +108,28 @@ def print_quality_report(original: np.ndarray, encoded: np.ndarray):
     print(f"Изменено:         {metrics['changed_pixels']:,} "
           f"({metrics['changed_percent']:.2f}%)")
     print("=" * 50)
+
+def lsb_histogram(image: np.ndarray) -> Tuple[int, int]:
+    """Считает чётные и нечётные LSB по RGB каналам."""
+    lsb = image & 1
+    odd_count = int(np.sum(lsb))
+    total = lsb.size
+    even_count = total - odd_count
+    return even_count, odd_count
+
+
+def odd_lsb_ratio(image: np.ndarray) -> float:
+    """Вычисляет долю нечётных LSB."""
+    even, odd = lsb_histogram(image)
+    total = even + odd
+    if total == 0:
+        return 0.0
+    return odd / total
+
+
+def detect_hint(image: np.ndarray) -> str:
+    """Определяет, похоже ли изображение на стеганографию."""
+    ratio = odd_lsb_ratio(image)
+    if 0.35 <= ratio <= 0.65:
+        return "looks clean"
+    return "likely stego"

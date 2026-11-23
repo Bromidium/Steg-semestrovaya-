@@ -88,6 +88,9 @@ static void write_stream(uint8_t* pixels, size_t n, int channels, int bits,
 
     for (size_t p = 0; p < total_pixels; ++p) {
         for (int c = 0; c < channels; ++c) {
+
+            if (byte_idx >= data_len && bit_pos == 8) return;
+
             // Собираем `bits` бит из потока данных
             uint8_t chunk = 0;
             int need = bits;
