@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 """
 Метрики качества для сравнения исходного и закодированного изображения.
 """
@@ -134,7 +133,7 @@ def detect_hint(image: np.ndarray) -> str:
     if 0.35 <= ratio <= 0.65:
         return "looks clean"
     return "likely stego"
-=======
+
 """
 Метрики качества для сравнения исходного и закодированного изображения.
 """
@@ -244,4 +243,4 @@ def print_quality_report(original: np.ndarray, encoded: np.ndarray):
     print(f"Изменено:         {metrics['changed_pixels']:,} "
           f"({metrics['changed_percent']:.2f}%)")
     print("=" * 50)
->>>>>>> 693583c0bc12be2226284314775118bab13a8a56
+
